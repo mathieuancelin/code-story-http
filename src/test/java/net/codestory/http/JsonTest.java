@@ -60,6 +60,45 @@ public class JsonTest extends AbstractWebServerTest {
     get("/person.obj").produces("application/json", expectedPerson);
   }  
 
+  @Test
+  public void json_post() {
+
+    JsValue personJsValue = Json.obj(
+      $("name", "John"),
+      $("surname", "Doe"),
+      $("age", 42),
+      $("address", Json.obj(
+        $("number", "221b"),
+        $("street", "Baker Street"),
+        $("city", "London")
+      ))
+    );
+
+    JsValue badPersonJsValue = Json.obj(
+      $("name", "John"),
+      $("surname", "Doe"),
+      $("age", 42),
+      $("adresse", Json.obj(
+        $("number", "221b"),
+        $("street", "Baker Street"),
+        $("city", "London")
+      ))
+    );
+
+    String expectedPerson = Json.stringify(personJsValue);
+    String badPerson = Json.stringify(badPersonJsValue);
+
+    server.configure(routes -> routes.
+        post("/persons/surname", context -> context.payload(JsValue.class).field("surname").as(String.class)).
+        post("/persons/validate", context -> context.payload(JsValue.class).validate(Person.FORMAT).isSuccess()).
+        post("/persons/extract", context -> context.payload(JsValue.class).read(Person.FORMAT).getOpt().map(p -> p.age).getOrElse(0)));
+
+    post("/persons/surname", expectedPerson).produces("Doe");
+    post("/persons/extract", expectedPerson).produces("42");
+    post("/persons/validate", expectedPerson).produces("true");
+    post("/persons/validate", badPerson).produces("false");
+  }  
+
   public static class Address {
     public final String number;
     public final String street;
@@ -103,6 +142,7 @@ public class JsonTest extends AbstractWebServerTest {
     public static final Format<Person> FORMAT = new Format<Person>() {
       @Override
       public JsResult<Person> read(JsValue value) {
+        System.out.println(Json.stringify(value));
         return combine(
           value.field("name").read(String.class),
           value.field("surname").read(String.class),
