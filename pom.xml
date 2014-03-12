@@ -256,7 +256,7 @@
     </dependency>
     <dependency>
       <groupId>org.reactivecouchbase</groupId>
-      <artifactId>json-lib_2.10</artifactId>
+      <artifactId>json-lib</artifactId>
       <version>0.2-SNAPSHOT</version>
     </dependency>
 
