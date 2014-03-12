@@ -26,6 +26,8 @@ import net.codestory.http.io.*;
 
 import org.simpleframework.http.*;
 
+import org.reactivecouchbase.json.*;
+
 public class Context {
   private final Request request;
   private final Response response;
@@ -148,6 +150,10 @@ public class Context {
 
   public <T> T payload(Class<T> type) {
     return TypeConvert.convert(this, type);
+  }
+
+  public <T> JsResult<T> payload(org.reactivecouchbase.json.Reader<T> reader) {
+    return reader.read(payload(JsValue.class));
   }
 
   public <T> T getBean(Class<T> type) {
