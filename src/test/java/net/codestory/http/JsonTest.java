@@ -35,6 +35,7 @@ import org.junit.*;
 public class JsonTest extends AbstractWebServerTest {
   @Test
   public void json_serialization() {
+
     JsValue personJsValue = Json.obj(
       $("name", "John"),
       $("surname", "Doe"),
@@ -45,14 +46,18 @@ public class JsonTest extends AbstractWebServerTest {
         $("city", "London")
       ))
     );
+
+    String expectedPerson = Json.stringify(personJsValue);
+
     Person personObj = new Person("John", "Doe", 42, 
             new Address("221b", "Baker Street", "London"));
+
     server.configure(routes -> routes.
         get("/person.json", personJsValue).
         get("/person.obj", Json.toJson(personObj, Person.FORMAT)));
 
-    get("/person.json").produces("application/json", Json.stringify(personJsValue));
-    get("/person.obj").produces("application/json", Json.stringify(personJsValue));
+    get("/person.json").produces("application/json", expectedPerson);
+    get("/person.obj").produces("application/json", expectedPerson);
   }  
 
   public static class Address {
@@ -71,12 +76,7 @@ public class JsonTest extends AbstractWebServerTest {
           value.field("number").read(String.class),
           value.field("street").read(String.class),
           value.field("city").read(String.class)
-        ).map(new Function<Functionnal.T3<String, String, String>, Address>() {
-          @Override
-          public Address apply(Functionnal.T3<String, String, String> input) {
-            return new Address(input._1, input._2, input._3);
-          }
-        });
+        ).map(input -> new Address(input._1, input._2, input._3));
       }
       @Override
       public JsValue write(Address value) {
@@ -108,12 +108,7 @@ public class JsonTest extends AbstractWebServerTest {
           value.field("surname").read(String.class),
           value.field("age").read(Integer.class),
           value.field("address").read(Address.FORMAT)
-        ).map(new Function<Functionnal.T4<String, String, Integer, Address>, Person>() {
-            @Override
-            public Person apply(Functionnal.T4<String, String, Integer, Address> input) {
-                return new Person(input._1, input._2, input._3, input._4);
-            }
-        });
+        ).map(input -> new Person(input._1, input._2, input._3, input._4));
       }
       @Override
       public JsValue write(Person value) {
